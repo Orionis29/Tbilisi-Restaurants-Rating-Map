@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Tbilisi Restaurants Map</title>
+		<script src="https://d3js.org/d3.v3.min.js"></script>
+		<script src='js/mapbox-gl.js'></script>
+		<link href="css/mapbox-gl.css" rel="stylesheet">
+		<link href="css/st.css" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap" rel="stylesheet">
+		
+		<style type="text/css">
+			html, body{
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+			svg {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+			}
+			circle:hover{
+				cursor: pointer;
+				fill: orange;
+			}
+			#map{
+				height: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="map"></div>
+		<div class="legend">
+			<h1>Tbilisi Restaurants Rating</h1>
+			<div class="stars">
+				<h2>Stars</h2>
+			</div>
+			<div class="reviews">
+				<h2>Reviews</h2>
+			</div>
+			<p class="disclaimer">Data Source: Tripadvisor</p>
+		</div>
+		<script src='js/elements.js'></script>
+		<script type="text/javascript">
+			mapboxgl.accessToken = 'pk.eyJ1IjoibWFkZW1lIiwiYSI6Im9iZnNDaWsifQ.B5hd834u4vlM0AdUvHk5WA'
+
+			// Setup Mapbox-gl map
+			let map = new mapboxgl.Map({
+				container: 'map',
+				style: 'mapbox://styles/mademe/ck1ovs03a26ue1co26swf5abn',
+				center: [44.800000, 41.700009],
+				zoom: 13
+			})
+
+			// Setup our svg layer that we can manipulate with d3
+			let container = map.getCanvasContainer();
+			let svg = d3.select(container).append('svg');
+
+			// open and read csv data file
+			d3.csv('data/tripadvisor-tbilisi.csv', function(error, data){
+
+				let dots = svg.selectAll("circle")
+						.data(data)
+						.enter()
+						.append('circle')
+							.attr('r', function(d){return radiusScale(d.review)})
+							.attr('fill', function(d){return colorScale(d.stars)})
+							.style('opacity', .7)
+							.style('stroke', 'black')
+							.on('mouseover', function(d){
+								tooltip
+									.style("visibility", "visible")
+									.style("left", d3.event.pageX + 20 + "px")
+									.style("top", d3.event.pageY + "px")
+									.html('<strong>' + d.name + '</strong><br>Stars: ' + d.stars  + '<br>Reviews: ' + d.review)
+							})
+							.on('mouseout', function(d){
+								tooltip
+									.style('visibility', 'hidden')
+							})
+
+				// render points
+				function render() {
+					dots.attr({
+						cx: function(d) {
+							let x = project(d).x;
+								return x
+						},
+						cy: function(d) {
+							let y = project(d).y;
+								return y
+						}
+					})
+				}
+				// render initial visualization
+				render()
+
+				// re-render visualization whenever the view changes
+				map.on("viewreset", function() {
+					render()
+				})
+				map.on("move", function() {
+					render()
+				})
+			})
+
+	</script>
+	</body>
+</html>
